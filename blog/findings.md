@@ -1,11 +1,13 @@
 # How to Confuse Your Handler
 
+## Background
+The goal of this research was to find security issues that could be easily exploited by an attacker during red team engagements, if the organisation is using the specific v380 CCTV camera. 
+
 <p align="center">
-  <img width="50%" src="v380lol.jpg" />
+  <img width="50%" src="v380.jpg" />
 </p>
 
-## Background
-The goal of this research was to find security issues that could be easily exploited by an attacker during red team engagements, if the organisation is using the specific v380 CCTV camera. The v380 pro is an extremely cheap (~$50 NZD) IP camera produced by [Macro-Video technologies](http://www.macro-video.com/en/) and seems to be pretty popular. It is sold by several online resellers and providers. 
+The v380 pro is an extremely cheap (~$50 NZD) IP camera produced by [Macro-Video technologies](http://www.macro-video.com/en/) and seems to be pretty popular. It is sold by several online resellers and providers. 
 
 > Macro-video technologies is a leading CCTV manufacturer in China market, we have been doing CCTV business for more than 8 years,
 
@@ -18,9 +20,7 @@ The IP Camera is configured using an [Android](https://play.google.com/store/app
 
 As with most research projects, it is worth investigating if any other previous research has been done as to avoid reinventing the wheel. I found the following article by [Cyberlink Security](https://cyberlinksecurity.ie/vulnerabilities-to-exploit-a-chinese-ip-camera/), where they'd already found a hard-coded key (`macrovideo+*#!^@`) used to encrypt packets containing the device's admin password when being sent from the mobile app to the backend server.
 
-I verified that this hard-coded key is still being used and made [slight changes to their script]() which did not work initially due to way their counter searched for null bytes in the password packet.
-
-The previous research also covered a method for enumerating v380 Camera device ID's, which has also been [slightly modified](https://github.com/dunderhay/v380-research/blob/master/find_devices/find_online/findcam.py).
+I verified that this hard-coded key is still being used and went over the method for enumerating v380 Camera device ID's, which I [slightly modified](https://github.com/dunderhay/v380-research/blob/master/find_devices/find_online/findcam.py).
 
 
 ## How the Video Streaming Works*
@@ -45,10 +45,10 @@ This process can be broken down as shown below:
 
 __*Note:__ A few assumptions had to be made here and the system may not actually work like this. None of the research was done using a cloud account.
 
-
+---
 ## Findings:
 
-### Capturing Device Credentials and Injecting Video Footage
+### Finding #1: Capturing Device Credentials and Injecting Video Footage
 
 While doing packet analysis, I noticed that the backend relay server sends the username and password in cleartext to the camera. This was pretty interesting, so I decided to investigate this further.
 
@@ -127,7 +127,7 @@ But why does this even matter? These cameras are just watching useless things li
 </p>
 
 ---
-### No Authentication Required on LAN
+### Finding #2: No Authentication Required on LAN
 
 While the cameras require authentication when viewing the video stream remotely (via a relay server), if an attacker has local network access, it is possible to connect to the IP camera via RTSP directly without needing credentials.
 
@@ -154,18 +154,20 @@ The underlying issues here is the lack of authentication required to view video 
 As per [RFC2326](https://tools.ietf.org/html/rfc2326), RTSP shares the same authentication schemes as HTTP. Any form of authentication is better than none.
 
 ---
-### Sending Wi-Fi SSID and Password in Cleartext
+### Finding #3: Wi-Fi SSID and Password Sent in Cleartext
 
-During configuration of the device, I noticed that the CCTV Camera is sending the Wi-Fi SSID (`AAAAA`) and password (`somesecurepassword`) in cleartext to the relay server.
+During configuration of the device, I noticed that the CCTV Camera is sending the Wi-Fi SSID (`AAAAA`) and password (`somesecurepassword`) in cleartext to the relay server. 
 
 <p align="center">
   <img src="wireshark-cleartext-wifi-password.png" />
 </p>
 
----
-### Who is Brute Forcing Credentials for Device 12345678
+This could be an interesting area for additional research. 
 
-When first testing my password capturing script, I was super excited to see a username and password roll in within a few seconds. However, after repeating the process, I received a different password, and then another... It appears that someone is attempting to brute-force passwords for some camera devices.
+---
+### Not really a finding... 
+
+When first testing my password capturing admin credentials script, I was super excited to see a username and password roll in within a few seconds. However, after repeating the process, I received a different password, and then another... It appears that someone is attempting to brute-force passwords for some of these devices.
 
 ```
 [+] Valid relay server IP address found: 118.190.204.96:53067
