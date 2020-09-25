@@ -70,9 +70,11 @@ To advertise a new device first look at the packets sent by the real IP camera a
 
 The following [Proof-of-Concept](https://github.com/dunderhay/CCTV-v380-pro/blob/master/scripts/advertise-camera/poc1_getcreds.py) sends the packets required to advertise a camera device to the master and relay servers. The script handles users attempting to connect to the camera's video stream. When a user requests to view the video stream, it first needs the relay server to authenticate to the camera. The script will respond, and the relay server attempts to authenticate to our fake camera / script (this is the packet response containing the cleartext admin username and password).
 
+[![IMAGE ALT TEXT](https://img.youtube.com/vi/DFWzTOUxXx0/0.jpg)](https://www.youtube.com/watch?v=DFWzTOUxXx0")
+
 <p align="center">
   <video width="100%" height="100%" controls="true" allowfullscreen="true">
-  <source src="https://www.youtube.com/watch?v=DFWzTOUxXx0" type="video/mp4">
+  <source src="" type="video/mp4">
 </video>
 </p>
 
@@ -106,19 +108,11 @@ This immediately reminded me of the 1996 movie "Speed", where the police attempt
 
 A second [proof-of-concept](https://github.com/dunderhay/CCTV-v380-pro/blob/master/scripts/advertise-camera/poc2_injectVideo.py) was created to inject a video feed after the relay server had authenticated to the camera.
 
-<p align="center">
-  <video width="100%" height="100%" controls="true" allowfullscreen="true">
-  <source src="https://www.youtube.com/watch?v=HJZgnQDDzSc" type="video/mp4">
-</video>
-</p>
+[![IMAGE ALT TEXT](https://img.youtube.com/vi/HJZgnQDDzSc/0.jpg)](https://www.youtube.com/watch?v=HJZgnQDDzSc")
 
 This concept has been used in several heist movies, where the camera is watching some valuable items (a bank vault filled with jewels or something) and the bad guys are able to loop the video footage to appear as normal while they steal said valuable items. A quick demo of a real-world attack is shown below.
 
-<p align="center">
-  <video width="100%" height="100%" controls="true" allowfullscreen="true">
-  <source src="https://www.youtube.com/watch?v=Ocv1Sp3wJNQ" type="video/mp4">
-</video>
-</p>
+[![IMAGE ALT TEXT](https://img.youtube.com/vi/Ocv1Sp3wJNQ/0.jpg)](https://www.youtube.com/watch?v=Ocv1Sp3wJNQ")
 
 But why does this even matter? These cameras are just watching useless things like someone's backyard right?
 
@@ -134,20 +128,11 @@ While the cameras require authentication when viewing the video stream remotely 
 
 To find individual v380 IP cameras on the network, I wrote the following [script](https://github.com/dunderhay/CCTV-v380-pro/blob/master/scripts/discover-cam-on-network/findcam.py) to send out broadcast requests periodically as done by the client and listen for a response from the camera.
 
-<p align="center">
-  <video width="100%" height="100%" controls="true" allowfullscreen="true">
-  <source src="https://www.youtube.com/watch?v=NiNLFB_tTFg" type="video/mp4">
-</video>
-</p>
+[![IMAGE ALT TEXT](https://img.youtube.com/vi/NiNLFB_tTFg/0.jpg)](https://www.youtube.com/watch?v=NiNLFB_tTFg")
 
 Once a camera is found, it is possible to connect directly to the video feed on port 554 using VLC player without providing any credentials:
 
-
-<p align="center">
-  <video width="100%" height="100%" controls="true" allowfullscreen="true">
-  <source src="https://www.youtube.com/watch?v=hgbGK8burH8" type="video/mp4">
-</video>
-</p>
+[![IMAGE ALT TEXT](https://img.youtube.com/vi/hgbGK8burH8/0.jpg)](https://www.youtube.com/watch?v=hgbGK8burH8")
 
 The underlying issues here is the lack of authentication required to view video stream of an IP camera device on the LAN.
 
