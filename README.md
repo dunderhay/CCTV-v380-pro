@@ -42,7 +42,7 @@ When turned on, the cameras register with the master server with details such as
 
 When a client asks the cloud to stream video from the camera, the master server contacts the camera and provides it information of a relay server to connect to. The camera connects to this relay server, which provides the username and password provided by the client app. If the camera accepts the username and password, the video stream is sent to the relay server, which in turn sends it to the client app.
 
-*matt: put arrows showing the username/password going from client -> master/whatever -> relay -> camera in following*
+*matt: put arrows showing the username/password and stream going from client <-> master/whatever <-> relay <-> camera in following*
 
 <p align="center">
   <img src="images/v380-network-basics.png" />
@@ -67,6 +67,8 @@ My first thought was that it might be possible to pretend to be an arbitrary cam
 </p>
 
 To do this I first looked at the packets sent by the real IP camera as part of registration to the master server. After plugging in the camera and capturing the data with Wireshark, we can see the following packets are sent to the master and relay servers:
+
+*matt: include relay server stuff?*
 
 <p align="center">
   <img src="images/wireshark-advertise-new-camera.png" />
@@ -107,6 +109,8 @@ The video feed is sent via TCP directly after the relay server sends the final U
 </p>
 
 A second [proof-of-concept](https://github.com/dunderhay/CCTV-v380-pro/blob/master/scripts/advertise-camera/poc2_injectVideo.py) was created to inject a video feed after the relay server had authenticated to the camera. The net result is that the user sees faked video rather than their real camera:
+
+*matt: fake the looping better lol*
 
 [![poc-2](https://img.youtube.com/vi/HJZgnQDDzSc/0.jpg)](https://www.youtube.com/watch?v=HJZgnQDDzSc)
 
@@ -183,6 +187,6 @@ It appears that someone is attempting to brute-force passwords for some of these
 
 
 ## Thoughts
-*cheap camera bad
+*matt: cheap camera bad
 thanks to work for buying camera (yes, do it) and maybe your friend for helping
 like subscribe follow*
