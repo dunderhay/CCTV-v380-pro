@@ -1,74 +1,80 @@
-# CCTV v380 Pro Research
+# v380 Pro IP Camera: Security Research
 
 ## Background
-The goal of this research was to find security issues that could be easily exploited by an attacker during red team engagements, if the organisation is using the specific v380 CCTV camera.
+The v380 Pro is an extremely cheap (~$30 USD) IP camera produced by [Macro-Video technologies](http://www.macro-video.com/en/) that seems to be pretty popular.
+
+*matt: mention that the boundaries between cameras, brands and vendors is often grey, tech is re-used and is from one underlying source, so this applies to other makes of cams*
+
+> Macro-video technologies is a leading CCTV manufacturer in China market, we have been doing CCTV business for more than 8 years
+
+These IP cameras are, like many "Internet of Things" devices, often poorely secured, so I decided to obtain a camera and took a look for myself.
 
 <p align="center">
   <img width="50%" src="images/v380.jpg" />
 </p>
 
-The v380 pro is an extremely cheap (~$50 NZD) IP camera produced by [Macro-Video technologies](http://www.macro-video.com/en/) and seems to be pretty popular. It is sold by several online resellers and providers.
+The camera can be connected to a network using wired Ethernet or via Wi-Fi. It's configured using an [Android](https://play.google.com/store/apps/details?id=com.macrovideo.v380pro&hl=en_AU) or [iOS]() app, or using a thick-client for Windows.
 
-> Macro-video technologies is a leading CCTV manufacturer in China market, we have been doing CCTV business for more than 8 years,
+Once configured, the camera can be remotely found and streamed via the phone apps and a cloud-based streaming system (described below). The cameras are identified with a cloud device ID and are secured via a username and password.
 
-The camera can be connected to a network in the following ways:
+*matt: show pic of app camera list and in use*
 
-- via Ethernet
-- via Wi-Fi
+## Previous Research
+As with most research projects, it's worth investigating if any other previous research has been done so as to avoid reinventing the wheel.
 
-The IP Camera is configured using an [Android](https://play.google.com/store/apps/details?id=com.macrovideo.v380pro&hl=en_AU) or [IOS]() app, or using a thick-client for Windows.
+I found an article by [Cyberlink Security](https://cyberlinksecurity.ie/vulnerabilities-to-exploit-a-chinese-ip-camera/), where they'd already found a hard-coded key (`macrovideo+*#!^@`) used to encrypt packets containing the device's admin password when being sent from the mobile app to the backend server.
 
-As with most research projects, it is worth investigating if any other previous research has been done as to avoid reinventing the wheel. I found the following article by [Cyberlink Security](https://cyberlinksecurity.ie/vulnerabilities-to-exploit-a-chinese-ip-camera/), where they'd already found a hard-coded key (`macrovideo+*#!^@`) used to encrypt packets containing the device's admin password when being sent from the mobile app to the backend server.
+I verified that this hard-coded key is still being used and went over their method for enumerating cloud device ID's, which I [slightly modified](https://github.com/dunderhay/CCTV-v380-pro/blob/master/scripts/discover-cam-online/findcam.py).
 
-I verified that this hard-coded key is still being used and went over the method for enumerating v380 Camera device ID's, which I [slightly modified](https://github.com/dunderhay/CCTV-v380-pro/blob/master/scripts/discover-cam-online/findcam.py).
+This is a good start, but can we go further? I decided to look at the camera side of the system, rather than the client side.
 
 
-## How the Video Streaming Works*
-Before going into the findings, it helps to understand how the system works. There appears to be three main elements to the system (that I have named):
+## How the Camera Streams via the Cloud
+__*Note:__ A few assumptions had to be made here and the system may not actually work like this. None of this research was done using a cloud account.
 
-- Backend Servers (Master and Relay servers)
-- IP Camera
-- Client (Android / IOS Apps or a Windows .exe executable)
+Before going into the findings, it helps to understand how the system works. There appears to be three main elements to the system:
 
-Despite the camera having RTSP port 554 open... the client apps do not directly receive the video feed from the camera. Instead the video feed is sent to a backend server, which acts as a relay.
+- The IP camera itself
+- Client application (Android / iOS apps or a Windows native client)
+- Backend servers (master and relay servers)
 
-This process can be broken down as shown below:
+When turned on, the cameras register with the master server with details such as their MAC address and firmware version. Importantly, this also includes the unique cloud device ID. This associates the ID with the source IP, which is communicated with over UDP.
 
-1. A Client would like to stream video and authenticates to a relay server. The client sends a username and password in an encrypted packet.
-2. The relay server that handles the video stream then authenticates to the IP Camera. The relay server sends the username and password to the camera in cleartext.
-3. If the username and password is correct, the IP Camera can start sending the video stream to the relay server.
-4. The relay server sends the video stream to the client that initiated the connection.
+When a client asks the cloud to stream video from the camera, the master server contacts the camera and provides it information of a relay server to connect to. The camera connects to this relay server, which provides the username and password provided by the client app. If the camera accepts the username and password, the video stream is sent to the relay server, which in turn sends it to the client app.
+
+*matt: put arrows showing the username/password going from client -> master/whatever -> relay -> camera in following*
 
 <p align="center">
   <img src="images/v380-network-basics.png" />
 </p>
 
-__*Note:__ A few assumptions had to be made here and the system may not actually work like this. None of the research was done using a cloud account.
 
----
-## Findings:
+## Findings
 
-### Finding #1: Capturing Device Credentials and Injecting Video Footage
-
-While doing packet analysis, I noticed that the backend relay server sends the username and password in cleartext to the camera. This was pretty interesting, so I decided to investigate this further.
+### Capturing Device Credentials
+While doing packet analysis, I noticed that the relay server sends the username and password in cleartext to the camera. This was pretty interesting, so I decided to investigate this further.
 
 <p align="center">
   <img src="images/wireshark-cleartext-password.png" />
 </p>
 
-My first thought was to see if it was possible to capture this packet containing the cleartext password in some way. Is it possible to advertise an existing camera device by sending the DeviceID to the backend (master and relay) servers and listen for the response containing the admin credentials?
+My first thought was that it might be possible to pretend to be an arbitrary camera by spoofing its registration under a given cloud camera ID to the backend servers, handle the relaying process, and then receive these password packets.
+
+*matt: put arrows showing divered password packet in following*
 
 <p align="center">
   <img src="images/spoof-camera-deviceID.png" />
 </p>
 
-To advertise a new device first look at the packets sent by the real IP camera and attempt to emulate this process with our script. After plugging in the camera and capturing the data with wireshark, we can see the following packets are sent to the master server:
+To do this I first looked at the packets sent by the real IP camera as part of registration to the master server. After plugging in the camera and capturing the data with Wireshark, we can see the following packets are sent to the master and relay servers:
 
 <p align="center">
   <img src="images/wireshark-advertise-new-camera.png" />
 </p>
 
-The following [Proof-of-Concept](https://github.com/dunderhay/CCTV-v380-pro/blob/master/scripts/advertise-camera/poc1_getcreds.py) sends the packets required to advertise a camera device to the master and relay servers. The script handles users attempting to connect to the camera's video stream. When a user requests to view the video stream, it first needs the relay server to authenticate to the camera. The script will respond, and the relay server attempts to authenticate to our fake camera / script (this is the packet response containing the cleartext admin username and password).
+The next step was to attempt to emulate this with a Python script. The following [proof-of-concept](https://github.com/dunderhay/CCTV-v380-pro/blob/master/scripts/advertise-camera/poc1_getcreds.py) sends the packets required to register a camera to the master server and handles the connection to the relay servers.
+
+After running, when a user attempts to stream the camera through the cloud, their username and password is captured:
 
 [![poc-1](https://img.youtube.com/vi/DFWzTOUxXx0/0.jpg)](https://www.youtube.com/watch?v=DFWzTOUxXx0)
 
@@ -78,39 +84,40 @@ The following [Proof-of-Concept](https://github.com/dunderhay/CCTV-v380-pro/blob
 </video>
 </p>
 
-We now have the three magic bits of information required to successfully connect to this camera feed:
+We now have the three magic bits of information required to successfully connect to the real camera's stream!
 
-- DeviceID
+- Camera cloud device ID
 - Username
 - Password
 
-Each camera advertisement packet does contain the MAC Address for the IP camera; however, this is not validated by the relay server and the password is sent regardless of the MAC address specified.
-
 The underlying issues here are:
 
-1. The relay server sends the username and password in cleartext.
-2. The relay server does not validate that the client is allowed to connect to the camera.
-3. The relay server does not validate the mac address of the camera.
+1. The relay server sends the username and password in cleartext. *matt: but how else would it do it?*
+2. The relay server does not validate that the client is allowed to connect to the camera. *matt: but how can it without asking the camera?*
+3. The relay server does not validate the mac address of the camera. *matt: but this isn't really the problem*
+*matt: the real problem is that ... need to think about it*
 
-The next thought was that, since we can get this far in the "start a video stream" request process, the next step is for the camera to tell the relay server that the password is correct. From here, the camera can start sending video data through the relay server to the client. The video feed is sent via TCP directly after the relay server sends the final UDP packet starting with `fe..`, which indicates "start streaming".
+## Injecting Video Footage
+My next thought was that, since we can get this far in the "start a video stream" request process, the next step is for the script to tell the relay server that the password is correct. From here, the script can start sending video data through the relay server to the client.
+
+The video feed is sent via TCP directly after the relay server sends the final UDP packet starting with `fe..`, which indicates "start streaming".
 
 <p align="center">
   <img src="images/wireshark-start-videostream.png" />
 </p>
 
+A second [proof-of-concept](https://github.com/dunderhay/CCTV-v380-pro/blob/master/scripts/advertise-camera/poc2_injectVideo.py) was created to inject a video feed after the relay server had authenticated to the camera. The net result is that the user sees faked video rather than their real camera:
 
-This immediately reminded me of the 1996 movie "Speed", where the police attempt to trick the bad guy by finding the video feed from the CCTV camera in the bus, looping it and sending back to the camera.
+[![poc-2](https://img.youtube.com/vi/HJZgnQDDzSc/0.jpg)](https://www.youtube.com/watch?v=HJZgnQDDzSc)
+
+This immediately reminded me of the 1996 movie "Speed", where the police attempt to trick the bad guy by finding the video feed from the CCTV camera in the bus, looping it and sending it back to him:
 
 <p align="center">
   <img width="24%" src="images/speed-poster.jpg" />
   <img width="70%" src="images/speed-bus-loop.gif" />
 </p>
 
-A second [proof-of-concept](https://github.com/dunderhay/CCTV-v380-pro/blob/master/scripts/advertise-camera/poc2_injectVideo.py) was created to inject a video feed after the relay server had authenticated to the camera.
-
-[![poc-2](https://img.youtube.com/vi/HJZgnQDDzSc/0.jpg)](https://www.youtube.com/watch?v=HJZgnQDDzSc)
-
-This concept has been used in several heist movies, where the camera is watching some valuable items (a bank vault filled with jewels or something) and the bad guys are able to loop the video footage to appear as normal while they steal said valuable items. A quick demo of a real-world attack is shown below.
+This concept has also been used in several heist movies, where the camera is watching some valuable items (a bank vault filled with jewels or something) and the bad guys are able to loop the video footage to appear as normal while they steal said valuable items. A quick demo of a real-world attack is shown below.
 
 [![real-poc](https://img.youtube.com/vi/Ocv1Sp3wJNQ/0.jpg)](https://www.youtube.com/watch?v=Ocv1Sp3wJNQ)
 
@@ -120,28 +127,25 @@ But why does this even matter? These cameras are just watching useless things li
   <img src="images/v380-uses.png" />
 </p>
 
----
-### Finding #2: No Authentication Required on LAN
 
-While the cameras require authentication when viewing the video stream remotely (via a relay server), if an attacker has local network access, it is possible to connect to the IP camera via RTSP directly without needing credentials.
-
+### No Authentication Required on LAN
+While the cameras require authentication when viewing the video stream remotely (via a relay server), if an attacker has local network access, it's possible to connect to the IP camera via RTSP directly without needing credentials.
 
 To find individual v380 IP cameras on the network, I wrote the following [script](https://github.com/dunderhay/CCTV-v380-pro/blob/master/scripts/discover-cam-on-network/findcam.py) to send out broadcast requests periodically as done by the client and listen for a response from the camera.
 
 [![find-cam](https://img.youtube.com/vi/NiNLFB_tTFg/0.jpg)](https://www.youtube.com/watch?v=NiNLFB_tTFg)
 
-Once a camera is found, it is possible to connect directly to the video feed on port 554 using VLC player without providing any credentials:
+Once a camera is found, it's possible to connect directly to the video feed on port 554 using VLC player without providing any credentials:
 
 [![view-cam](https://img.youtube.com/vi/hgbGK8burH8/0.jpg)](https://www.youtube.com/watch?v=hgbGK8burH8)
 
-The underlying issues here is the lack of authentication required to view video stream of an IP camera device on the LAN.
+The underlying issue here is the lack of authentication required to view video stream of an IP camera device on the LAN.
 
 As per [RFC2326](https://tools.ietf.org/html/rfc2326), RTSP shares the same authentication schemes as HTTP. Any form of authentication is better than none.
 
----
-### Finding #3: Wi-Fi SSID and Password Sent in Cleartext
 
-During configuration of the device, I noticed that the CCTV Camera is sending the Wi-Fi SSID (`AAAAA`) and password (`somesecurepassword`) in cleartext to the relay server.
+### Wi-Fi SSID and Password Sent in Cleartext
+During configuration of the device, I noticed that the camera is sending the Wi-Fi SSID (here `AAAAA`) and password (`somesecurepassword`) in cleartext to the relay server.
 
 <p align="center">
   <img src="images/wireshark-cleartext-wifi-password.png" />
@@ -149,10 +153,9 @@ During configuration of the device, I noticed that the CCTV Camera is sending th
 
 This could be an interesting area for additional research.
 
----
-### Not a Finding but Interesting... 
 
-When first testing my password capturing admin credentials script, I was super excited to see a username and password roll in within a few seconds. However, after repeating the process, I received a different password, and then another... It appears that someone is attempting to brute-force passwords for some of these devices.
+## An interesting aside 
+When first testing my (password-capturing script)[#user-content-capturing-device-credentials], I was super excited to see a username and password roll in within a few seconds. However, after repeating the process, I quickly received a different password, and then another...
 
 ```
 [+] Valid relay server IP address found: 118.190.204.96:53067
@@ -175,3 +178,11 @@ When first testing my password capturing admin credentials script, I was super e
 [+] Username: admin
 [+] Password: okok591939
 ```
+
+It appears that someone is attempting to brute-force passwords for some of these devices!
+
+
+## Thoughts
+*cheap camera bad
+thanks to work for buying camera (yes, do it) and maybe your friend for helping
+like subscribe follow*
