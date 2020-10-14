@@ -190,3 +190,6 @@ It appears that someone is attempting to brute-force passwords for some of these
 *matt: cheap camera bad
 thanks to work for buying camera (yes, do it) and maybe your friend for helping
 like subscribe follow*
+
+
+*matt: tidy up your repos, delete all the 1,2,3,4,5,6.py shit and the bruteforce .txt maybe. make sure all scripts are linked explicitly in the blog post (and again at the bottom here*
