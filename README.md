@@ -176,5 +176,5 @@ When first testing my password-capturing script, I was super excited to see a us
 It appears that someone is attempting to brute-force passwords for some of these devices!
 
 ## Acknowledgments
-- A huge thank you to Aura for giving us research budget and time to do cool things. 
-- Another huge thank you to Matthew Daley for helping as always.
+- A huge thank you to [Aura](https://www.aurainfosec.com/) for giving us research budget and time to do cool things. 
+- Another huge thank you to [Matthew Daley](https://github.com/megabug) for helping as always.
