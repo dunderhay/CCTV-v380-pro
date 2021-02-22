@@ -18,8 +18,8 @@ The camera can be connected to a network using wired Ethernet or via Wi-Fi. It's
 Once configured, the camera can be remotely found and streamed via the phone apps and a cloud-based streaming system (described below). The cameras are identified with a cloud device ID and are secured via a username and password.
 
 <p align="center">
-  <img width="50%" src="images/v380-prdimg.png" />
-  <img width="50%" src="images/v380-prdimg2.png />
+  <img width="40%" src="images/v380-prdimg.png" />
+  <img width="40%" src="images/v380-prdimg2.png />
 </p>
 
 ## Previous Research
