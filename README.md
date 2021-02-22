@@ -52,6 +52,7 @@ When a client asks the cloud to stream video from the camera, the master server 
 
 
 ## Findings
+Most IoT research focuses on getting a shell on the device. However, my goals were a bit different and I wanted to focus on a practical attack against the IP camera.
 
 ### Capturing Device Credentials
 While doing packet analysis, I noticed that the relay server sends the username and password in cleartext to the camera. This was pretty interesting, so I decided to investigate this further.
@@ -72,7 +73,7 @@ To do this I first looked at the packets sent by the real IP camera as part of r
   <img src="images/wireshark-advertise-new-camera.png" />
 </p>
 
-The next step was to attempt to emulate this with a Python script. The following [proof-of-concept](https://github.com/dunderhay/CCTV-v380-pro/blob/master/scripts/advertise-camera/poc1_getcreds.py) sends the packets required to register a camera to the master server and handles the connection to the relay servers.
+The next step was to attempt to emulate this with python. The following [proof-of-concept](https://github.com/dunderhay/CCTV-v380-pro/blob/master/scripts/advertise-camera/poc1_getcreds.py) sends the packets required to register a camera to the master server and handles the connection to the relay servers.
 
 After running, when a user attempts to stream the camera through the cloud, their username and password is captured:
 
@@ -112,16 +113,17 @@ This immediately reminded me of the 1996 movie "Speed", where the police attempt
   <img width="70%" src="images/speed-bus-loop.gif" />
 </p>
 
-This concept has also been used in several heist movies, where the camera is watching some valuable items (a bank vault filled with jewels or something) and the bad guys are able to loop the video footage to appear as normal while they steal said valuable items. A quick demo of a real-world attack is shown below.
+This concept has also been used in several heist movies, where the camera is watching some valuable items (a bank vault or something valuable) and the bad guys are able to loop the video footage to appear as normal while they steal said valuable items. A quick demo of a real-world attack is shown below.
 
 [![real-poc](https://img.youtube.com/vi/Ocv1Sp3wJNQ/0.jpg)](https://www.youtube.com/watch?v=Ocv1Sp3wJNQ)
 
-But why does this even matter? These cameras are just watching useless things like someone's backyard right?
+But why does this even matter? These cameras are just watching useless things like someone's backyard right? According to the Macro-Video technologies website; these cameras are widely used in banks, stores factories, and so on.
 
 <p align="center">
   <img src="images/v380-uses.png" />
 </p>
 
+As mentioned earlier, these devices are also often rebranded and sold by different vendor. In this instance, the v380 is also commonly sold as a baby monitor.
 
 ### No Authentication Required on LAN
 While the cameras require authentication when viewing the video stream remotely (via a relay server), if an attacker has local network access, it's possible to connect to the IP camera via RTSP directly without needing credentials.
@@ -149,7 +151,7 @@ During configuration of the device, I noticed that the camera is sending the Wi-
 This could be an interesting area for additional research.
 
 
-## An interesting aside 
+## An Interesting Aside 
 When first testing my password-capturing script, I was super excited to see a username and password roll in within a few seconds. However, after repeating the process, I quickly received a different password, and then another...
 
 ```
