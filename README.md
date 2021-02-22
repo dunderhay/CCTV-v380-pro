@@ -19,7 +19,7 @@ Once configured, the camera can be remotely found and streamed via the phone app
 
 <p align="center">
   <img width="40%" src="images/v380-prdimg.png" />
-  <img width="40%" src="images/v380-prdimg2.png />
+  <img width="40%" src="images/v380-prdimg2.png" />
 </p>
 
 ## Previous Research
