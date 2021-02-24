@@ -33,7 +33,7 @@ This is a good start, but can we go further? I decided to look at the camera sid
 
 
 ## How the Camera Streams via the Cloud
-__*Note:__ A few assumptions had to be made here and the system may not actually work like this. None of this research was done using a cloud account.
+*Note: Of course, it's not possible for me to know exactly how the back end systems work, so I've have to make a few assumptions.*
 
 Before going into the findings, it helps to understand how the system works. There appears to be three main elements to the system:
 
@@ -180,4 +180,4 @@ It appears that someone is attempting to brute-force passwords for some of these
 
 ## Acknowledgments
 - A huge thank you to [Aura](https://www.aurainfosec.com/) for giving us research budget and time to do cool things. 
-- Another huge thank you to [Matthew Daley](https://github.com/megabug) for helping as always.
+- Another huge thank you to [Matthew Daley](https://bugfuzz.com/) for helping as always.
