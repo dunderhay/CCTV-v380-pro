@@ -1,4 +1,7 @@
 # v380 Pro IP Camera: Security Research
+<p align="center">
+  <img width="50%" src="images/CCTV-in-Operation.png" />
+</p>
 
 ## Background
 The v380 Pro is an extremely cheap (~$30 USD) IP camera produced by [Macro-Video technologies](http://www.macro-video.com/en/) that seems to be pretty popular.
