@@ -5,7 +5,7 @@ The v380 Pro is an extremely cheap (~$30 USD) IP camera produced by [Macro-Video
 
 > Macro-video technologies is a leading CCTV manufacturer in China market, we have been doing CCTV business for more than 8 years
 
-These IP cameras are, like many "Internet of Things" devices, often poorely secured, so I decided to obtain a camera and took a look for myself.
+These IP cameras are, like many "Internet of Things" devices, often poorly secured, so I decided to obtain a camera and took a look for myself.
 
 These cameras are sold under various brand names by several different vendors. Most of the hardware and software comes from the same underlying source, so the research discussed here likely applies to other camera models. For example, this camera was purchased from Banggood under the brand name GUUDGO.
 
